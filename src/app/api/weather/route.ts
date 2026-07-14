@@ -1,46 +1,60 @@
-import { locationQuerySchema } from "@/features/location/schemas/location.schema";
-import { getQueryParams } from "@/lib/utils/parse-query";
-import { successResponse, errorResponse } from "@/lib/utils/api-response";
-import type {
-  WeatherSuccessResponse,
-  WeatherErrorResponse,
-} from "@/features/weather-decision/types/api.types";
+import { locationQuerySchema } from '@/features/location/schemas/location.schema'
+import { getQueryParams } from '@/lib/utils/parse-query'
+import { successResponse, errorResponse } from '@/lib/utils/api-response'
+import { fetchWeather } from '@/lib/weather/fetch-weather'
 
 export async function GET(request: Request) {
   try {
-    const rawParams = getQueryParams(request.url);
+    const rawParams = getQueryParams(request.url)
 
-    // Explicit missing param check
     if (!rawParams.lat || !rawParams.lon) {
       return errorResponse(
-        "Missing required query parameters: lat and lon",
-        400,
-      );
+        'Missing required query parameters: lat and lon',
+        400
+      )
     }
 
-    const parsed = locationQuerySchema.safeParse(rawParams);
+    const parsed = locationQuerySchema.safeParse(rawParams)
 
     if (!parsed.success) {
       return errorResponse(
-        "Invalid query parameters",
+        'Invalid query parameters',
         400,
-        parsed.error.flatten().fieldErrors,
-      );
+        parsed.error.flatten().fieldErrors
+      )
     }
 
-    const { lat, lon } = parsed.data;
+    const { lat, lon } = parsed.data
 
-    const response: WeatherSuccessResponse = {
-      status: "ok",
-      data: { lat, lon },
-    };
+    const weather = await fetchWeather(lat, lon)
 
-    return successResponse(response.data);
+    return successResponse({
+      lat,
+      lon,
+      weather,
+    })
   } catch (error) {
-    return errorResponse("Internal server error", 500);
+    console.error('Weather route failed', error)
+
+    const message = error instanceof Error ? error.message : String(error);
+
+    // map known errors
+    if (message.includes('timeout')) {
+      return errorResponse('Weather service timeout', 504)
+    }
+
+    if (message.includes('unavailable')) {
+      return errorResponse('Weather service unavailable', 503)
+    }
+
+    if (message.includes('Invalid weather API key')) {
+      return errorResponse('Server configuration error', 500)
+    }
+
+    return errorResponse('Internal server error', 500)
   }
 }
 
 export async function POST() {
-  return errorResponse("Method not allowed", 405);
+  return errorResponse('Method not allowed', 405)
 }
