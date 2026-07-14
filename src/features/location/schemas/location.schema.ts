@@ -21,3 +21,14 @@ export const locationQuerySchema = z.object({
 });
 
 export type LocationQuery = z.infer<typeof locationQuerySchema>;
+
+export const locationInputSchema = z.object({
+  lat: z
+    .number()
+    .min(-90)
+    .max(90),
+  lon: z
+    .number()
+    .min(-180)
+    .max(180),
+})
