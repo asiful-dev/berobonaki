@@ -1,37 +1,49 @@
 'use client'
 
-import { useWeather } from '@/features/weather/hooks/use-weather'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert } from '@/components/ui/alert'
+import { getRiskColor } from '../utils/risk-style'
+import type { UseQueryResult } from '@tanstack/react-query'
+import type { z } from 'zod'
+import { WeatherResponseSchema } from '@/lib/weather/schemas/weather.schema'
+
+type WeatherResponse = z.infer<typeof WeatherResponseSchema>
 
 export function WeatherCard({
-  lat,
-  lon,
+  query,
 }: {
-  lat: number
-  lon: number
+  query: UseQueryResult<WeatherResponse>
 }) {
-  const { data, isLoading, isError, error } = useWeather(lat, lon)
+  const { data, isLoading, isError, error } = query
 
   if (isLoading) {
-    return <div>Loading weather data...</div>
+    return (
+      <Card className="p-4 space-y-3">
+        <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </Card>
+    )
   }
 
   if (isError) {
     return (
-      <div className="text-red-500">
+      <Alert variant="destructive">
         {(error as Error).message}
-      </div>
+      </Alert>
     )
   }
 
   if (!data) {
-    return <div>No data available</div>
+    return null
   }
 
   const { weather, decision } = data.data
 
   return (
-    <div className="p-4 border rounded-lg space-y-2">
-      <h2 className="text-xl font-semibold">
+    <Card className="p-4 space-y-2">
+      <h2 className="text-lg font-semibold">
         Weather Overview
       </h2>
 
@@ -41,13 +53,15 @@ export function WeatherCard({
       <p>Wind: {weather.windSpeed} m/s</p>
       <p>Condition: {weather.description}</p>
 
-      <div className="mt-4">
+      <div className="pt-3">
         <p>
           Risk Level:{' '}
-          <strong>{decision.riskLevel}</strong>
+          <strong className={getRiskColor(decision.riskLevel)}>
+            {decision.riskLevel}
+          </strong>
         </p>
         <p>Score: {decision.score.toFixed(2)}</p>
       </div>
-    </div>
+    </Card>
   )
 }

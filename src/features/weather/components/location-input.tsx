@@ -1,58 +1,72 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { locationInputSchema } from '@/features/location/schemas/location.schema'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+import {
+  locationInputSchema,
+  type LocationInput,
+} from "@/features/location/schemas/location.schema";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+
+type FormValues = z.input<typeof locationInputSchema>;
+type FormOutput = z.output<typeof locationInputSchema>;
 
 export function LocationInput({
   onSubmit,
+  isLoading,
 }: {
-  onSubmit: (lat: number, lon: number) => void
+  onSubmit: (lat: number, lon: number) => void;
+  isLoading: boolean;
 }) {
-  const [lat, setLat] = useState('')
-  const [lon, setLon] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues, unknown, FormOutput>({
+    resolver: zodResolver(locationInputSchema),
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: {
+      lat: "",
+      lon: "",
+    },
+  });
 
-  function handleSubmit() {
-    const parsed = locationInputSchema.safeParse({
-      lat: Number(lat),
-      lon: Number(lon),
-    })
-
-    if (!parsed.success) {
-      setError('Invalid latitude or longitude')
-      return
-    }
-
-    setError(null)
-    onSubmit(parsed.data.lat, parsed.data.lon)
+  function submitHandler(data: LocationInput) {
+    onSubmit(data.lat, data.lon);
   }
 
   return (
-    <div className="space-y-2">
-      <input
-        placeholder="Latitude (-90 to 90)"
-        value={lat}
-        onChange={(e) => setLat(e.target.value)}
-        className="border p-2 w-full"
-      />
+    <form onSubmit={handleSubmit(submitHandler)} className="space-y-3">
+      <div>
+        <Input placeholder="Latitude (-90 to 90)" {...register("lat")} />
+        {errors.lat && (
+          <p className="text-red-500 text-sm">{errors.lat.message}</p>
+        )}
+      </div>
 
-      <input
-        placeholder="Longitude (-180 to 180)"
-        value={lon}
-        onChange={(e) => setLon(e.target.value)}
-        className="border p-2 w-full"
-      />
+      <div>
+        <Input placeholder="Longitude (-180 to 180)" {...register("lon")} />
+        {errors.lon && (
+          <p className="text-red-500 text-sm">{errors.lon.message}</p>
+        )}
+      </div>
 
-      {error && (
-        <p className="text-red-500 text-sm">{error}</p>
+      {errors.root && (
+        <Alert variant="destructive">{errors.root.message}</Alert>
       )}
 
-      <button
-        onClick={handleSubmit}
-        className="bg-black text-white px-4 py-2"
+      <Button
+        type="submit"
+        disabled={isLoading || isSubmitting}
+        className="w-full"
       >
-        Get Weather
-      </button>
-    </div>
-  )
+        {isLoading ? "Loading..." : "Get Weather"}
+      </Button>
+    </form>
+  );
 }
