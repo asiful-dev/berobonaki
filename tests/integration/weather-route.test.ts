@@ -46,4 +46,17 @@ describe("GET /api/weather", () => {
   expect(response.status).toBe(503)
   expect(data.status).toBe('error')
 })
+it('should return 504 on timeout', async () => {
+  vi.mocked(fetch).mockImplementation(() =>
+    new Promise((_, reject) => reject(new Error('timeout')))
+  )
+
+  const request = new Request(
+    'http://localhost:3000/api/weather?lat=23.8&lon=90.4'
+  )
+
+  const response = await GET(request)
+
+  expect(response.status).toBe(504)
+})
 });
