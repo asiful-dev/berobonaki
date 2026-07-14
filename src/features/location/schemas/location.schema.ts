@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { numberFromInput } from "@/lib/validation/fields/number-from-input";
+
 export const locationQuerySchema = z.object({
   lat: z.coerce
     .number()
@@ -23,12 +25,21 @@ export const locationQuerySchema = z.object({
 export type LocationQuery = z.infer<typeof locationQuerySchema>;
 
 export const locationInputSchema = z.object({
-  lat: z
-    .number()
-    .min(-90)
-    .max(90),
-  lon: z
-    .number()
-    .min(-180)
-    .max(180),
-})
+  lat: numberFromInput("Latitude")
+    .refine((val) => val >= -90, {
+      message: "Latitude must be >= -90",
+    })
+    .refine((val) => val <= 90, {
+      message: "Latitude must be <= 90",
+    }),
+
+  lon: numberFromInput("Longitude")
+    .refine((val) => val >= -180, {
+      message: "Longitude must be >= -180",
+    })
+    .refine((val) => val <= 180, {
+      message: "Longitude must be <= 180",
+    }),
+});
+
+export type LocationInput = z.infer<typeof locationInputSchema>;
