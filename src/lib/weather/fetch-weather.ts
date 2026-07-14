@@ -18,7 +18,8 @@ async function fetchWithRetry(
 
 export async function fetchWeather(
   lat: number,
-  lon: number
+  lon: number,
+  requestId?: string
 ): Promise<NormalizedWeather> {
 
   const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${env.WEATHER_API_KEY}&units=metric`
@@ -33,7 +34,8 @@ export async function fetchWeather(
       fetch(url, { signal: controller.signal })
     )
   } catch (error) {
-    logger.error('Weather API timeout or network error', {
+    logger.error('weather_api_timeout', {
+      requestId,
       lat,
       lon,
       error,
@@ -60,7 +62,8 @@ export async function fetchWeather(
   const parsed = weatherApiResponseSchema.safeParse(json)
 
   if (!parsed.success) {
-    logger.error('Weather API schema validation failed', {
+    logger.error('weather_schema_invalid', {
+      requestId,
       lat,
       lon,
       errors: parsed.error.flatten(),
@@ -68,6 +71,12 @@ export async function fetchWeather(
 
     throw new Error('Invalid weather API response')
   }
+
+  logger.info('weather_fetched', {
+    requestId,
+    lat,
+    lon,
+  })
 
   return normalizeWeather(parsed.data)
 }

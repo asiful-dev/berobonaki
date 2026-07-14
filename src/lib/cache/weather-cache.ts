@@ -14,9 +14,11 @@ function getCacheKey(lat: number, lon: number): string {
   return `weather:${nLat}:${nLon}`
 }
 
+
 export async function getCachedWeather(
   lat: number,
-  lon: number
+  lon: number,
+  requestId?: string
 ): Promise<NormalizedWeather | null> {
   try {
     const redis = getRedisClient()
@@ -25,9 +27,15 @@ export async function getCachedWeather(
       getCacheKey(lat, lon)
     )
 
+    if (data) {
+      logger.info('cache_hit', { requestId, lat, lon })
+    } else {
+      logger.info('cache_miss', { requestId, lat, lon })
+    }
+
     return data ?? null
   } catch (error: unknown) {
-    logger.error('Redis get cache failed', { error })
+    logger.error('redis_cache_error', { requestId, error })
     return null
   }
 }
@@ -35,7 +43,8 @@ export async function getCachedWeather(
 export async function setCachedWeather(
   lat: number,
   lon: number,
-  weather: NormalizedWeather
+  weather: NormalizedWeather,
+  requestId?: string
 ): Promise<void> {
   try {
     const redis = getRedisClient()
@@ -44,6 +53,6 @@ export async function setCachedWeather(
       ex: TTL_SECONDS,
     })
   } catch (error: unknown) {
-    logger.error('Redis set cache failed', { error })
+    logger.error('redis_cache_error', { requestId, error })
   }
 }
