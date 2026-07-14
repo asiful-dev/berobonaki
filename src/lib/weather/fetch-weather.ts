@@ -2,6 +2,7 @@ import { env } from "@/config/env"
 import { weatherApiResponseSchema } from "./schemas/weather.schema"
 import { normalizeWeather } from "./normalize"
 import type { NormalizedWeather } from "./types/weather.types"
+import { logger } from "@/lib/logger"
 
 async function fetchWithRetry(
   fn: () => Promise<Response>,
@@ -32,7 +33,7 @@ export async function fetchWeather(
       fetch(url, { signal: controller.signal })
     )
   } catch (error) {
-    console.error('Weather API timeout or network error', {
+    logger.error('Weather API timeout or network error', {
       lat,
       lon,
       error,
@@ -59,7 +60,7 @@ export async function fetchWeather(
   const parsed = weatherApiResponseSchema.safeParse(json)
 
   if (!parsed.success) {
-    console.error('Weather API schema validation failed', {
+    logger.error('Weather API schema validation failed', {
       lat,
       lon,
       errors: parsed.error.flatten(),

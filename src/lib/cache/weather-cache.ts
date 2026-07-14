@@ -1,5 +1,6 @@
 import { getRedisClient } from '../redis/client'
 import type { NormalizedWeather } from '../weather/types/weather.types'
+import { logger } from '../logger'
 
 const TTL_SECONDS = 300
 
@@ -26,7 +27,7 @@ export async function getCachedWeather(
 
     return data ?? null
   } catch (error: unknown) {
-    console.error('Redis get cache failed', error)
+    logger.error('Redis get cache failed', { error })
     return null
   }
 }
@@ -43,6 +44,6 @@ export async function setCachedWeather(
       ex: TTL_SECONDS,
     })
   } catch (error: unknown) {
-    console.error('Redis set cache failed', error)
+    logger.error('Redis set cache failed', { error })
   }
 }

@@ -6,6 +6,7 @@ import { calculateRainRisk } from '@/lib/decision-engine'
 import { getCachedWeather, setCachedWeather } from '@/lib/cache/weather-cache'
 import { rateLimit } from '@/lib/rate-limit/rate-limit'
 import { getClientIp } from '@/lib/utils/get-ip'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
       decision,
     })
   } catch (error: unknown) {
-    console.error('Weather route failed', error)
+    logger.error('Weather route failed', { error })
 
     if (error instanceof Error) {
       if (error.message.includes('timeout')) {
