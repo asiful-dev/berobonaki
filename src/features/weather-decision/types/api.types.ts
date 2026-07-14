@@ -1,8 +1,11 @@
+import { NormalizedWeather } from "@/lib/weather/types/weather.types";
+
 export type WeatherSuccessResponse = {
   status: "ok";
   data: {
     lat: number;
     lon: number;
+    weather: NormalizedWeather;
   };
 };
 

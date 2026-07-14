@@ -1,16 +1,13 @@
 import { locationQuerySchema } from "@/features/location/schemas/location.schema";
 import { getQueryParams } from "@/lib/utils/parse-query";
 import { successResponse, errorResponse } from "@/lib/utils/api-response";
-import type {
-  WeatherSuccessResponse,
-  WeatherErrorResponse,
-} from "@/features/weather-decision/types/api.types";
+import { fetchWeather } from "@/lib/weather/fetch-weather";
+import type { WeatherSuccessResponse } from "@/features/weather-decision/types/api.types";
 
 export async function GET(request: Request) {
   try {
     const rawParams = getQueryParams(request.url);
 
-    // Explicit missing param check
     if (!rawParams.lat || !rawParams.lon) {
       return errorResponse(
         "Missing required query parameters: lat and lon",
@@ -30,13 +27,19 @@ export async function GET(request: Request) {
 
     const { lat, lon } = parsed.data;
 
+    const weather = await fetchWeather(lat, lon);
+
     const response: WeatherSuccessResponse = {
       status: "ok",
-      data: { lat, lon },
+      data: {
+        lat,
+        lon,
+        weather,
+      },
     };
 
     return successResponse(response.data);
-  } catch (error) {
+  } catch {
     return errorResponse("Internal server error", 500);
   }
 }
