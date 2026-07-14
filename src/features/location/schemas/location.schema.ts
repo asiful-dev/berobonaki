@@ -1,15 +1,8 @@
 import { z } from "zod";
 
-const requiredNumberFromQuery = z.preprocess((value) => {
-  if (value === null || value === undefined || value === "") {
-    return undefined;
-  }
-
-  return value;
-}, z.coerce.number());
-
 export const locationQuerySchema = z.object({
-  lat: requiredNumberFromQuery
+  lat: z.coerce
+    .number()
     .refine((val) => Number.isFinite(val), {
       message: "Latitude must be a valid number",
     })
@@ -17,7 +10,8 @@ export const locationQuerySchema = z.object({
       message: "Latitude must be between -90 and 90",
     }),
 
-  lon: requiredNumberFromQuery
+  lon: z.coerce
+    .number()
     .refine((val) => Number.isFinite(val), {
       message: "Longitude must be a valid number",
     })
@@ -25,3 +19,5 @@ export const locationQuerySchema = z.object({
       message: "Longitude must be between -180 and 180",
     }),
 });
+
+export type LocationQuery = z.infer<typeof locationQuerySchema>;

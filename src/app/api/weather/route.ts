@@ -1,55 +1,46 @@
-import { NextResponse } from "next/server";
 import { locationQuerySchema } from "@/features/location/schemas/location.schema";
 import { getQueryParams } from "@/lib/utils/parse-query";
-
-type SuccessResponse = {
-  status: "ok";
-  data: {
-    lat: number;
-    lon: number;
-  };
-};
-
-type ErrorResponse = {
-  status: "error";
-  message: string;
-  errors?: Record<string, string[]>;
-};
+import { successResponse, errorResponse } from "@/lib/utils/api-response";
+import type {
+  WeatherSuccessResponse,
+  WeatherErrorResponse,
+} from "@/features/weather-decision/types/api.types";
 
 export async function GET(request: Request) {
   try {
     const rawParams = getQueryParams(request.url);
 
+    // Explicit missing param check
+    if (!rawParams.lat || !rawParams.lon) {
+      return errorResponse(
+        "Missing required query parameters: lat and lon",
+        400,
+      );
+    }
+
     const parsed = locationQuerySchema.safeParse(rawParams);
 
     if (!parsed.success) {
-      return NextResponse.json<ErrorResponse>(
-        {
-          status: "error",
-          message: "Invalid query parameters",
-          errors: parsed.error.flatten().fieldErrors,
-        },
-        { status: 400 },
+      return errorResponse(
+        "Invalid query parameters",
+        400,
+        parsed.error.flatten().fieldErrors,
       );
     }
 
     const { lat, lon } = parsed.data;
 
-    return NextResponse.json<SuccessResponse>({
+    const response: WeatherSuccessResponse = {
       status: "ok",
       data: { lat, lon },
-    });
+    };
+
+    return successResponse(response.data);
   } catch (error) {
-    return NextResponse.json<ErrorResponse>(
-      {
-        status: "error",
-        message: "Internal server error",
-      },
-      { status: 500 },
-    );
+    return errorResponse("Internal server error", 500);
   }
 }
 
 export async function POST() {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+  return errorResponse("Method not allowed", 405);
 }

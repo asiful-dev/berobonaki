@@ -79,4 +79,14 @@ describe("GET /api/weather", () => {
     expect(data.data.lat).toBeCloseTo(23.810331);
     expect(data.data.lon).toBeCloseTo(90.412521);
   });
+
+  it("should return error for missing params", async () => {
+    const request = new Request("http://localhost:3000/api/weather");
+
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.message).toBe("Missing required query parameters: lat and lon");
+  });
 });
