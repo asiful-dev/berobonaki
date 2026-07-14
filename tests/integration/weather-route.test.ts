@@ -59,4 +59,32 @@ it('should return 504 on timeout', async () => {
 
   expect(response.status).toBe(504)
 })
+
+  it("should return decision data", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          current: {
+            temp: 30,
+            feels_like: 32,
+            humidity: 80,
+            wind_speed: 10,
+            weather: [{ main: "Rain", description: "light rain" }],
+            rain: { "1h": 5 },
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const request = new Request(
+      "http://localhost:3000/api/weather?lat=23.8&lon=90.4"
+    );
+
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(data.data.decision).toBeDefined();
+    expect(data.data.decision.riskLevel).toBe("moderate");
+  });
 });

@@ -2,6 +2,7 @@ import { locationQuerySchema } from '@/features/location/schemas/location.schema
 import { getQueryParams } from '@/lib/utils/parse-query'
 import { successResponse, errorResponse } from '@/lib/utils/api-response'
 import { fetchWeather } from '@/lib/weather/fetch-weather'
+import { calculateRainRisk } from '@/lib/decision-engine'
 
 export async function GET(request: Request) {
   try {
@@ -27,11 +28,19 @@ export async function GET(request: Request) {
     const { lat, lon } = parsed.data
 
     const weather = await fetchWeather(lat, lon)
+    
+    const decision = calculateRainRisk({
+      rain1h: weather.rain1h,
+      humidity: weather.humidity,
+      windSpeed: weather.windSpeed,
+      condition: weather.condition,
+    })
 
     return successResponse({
       lat,
       lon,
       weather,
+      decision,
     })
   } catch (error) {
     console.error('Weather route failed', error)
